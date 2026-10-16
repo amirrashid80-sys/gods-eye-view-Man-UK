@@ -235,6 +235,18 @@ const RAW_GBFS_CITY_REGISTRY = [
     provider: 'Biki',
   },
   {
+    id: 'manchester-bee-network',
+    city: 'Manchester, UK',
+    centerLat: 53.4808,
+    centerLon: -2.2426,
+    loadRadiusKm: 90,
+    stationInformationUrl:
+      'https://beryl-gbfs-production.web.app/v2_2/Greater_Manchester/station_information.json',
+    stationStatusUrl:
+      'https://beryl-gbfs-production.web.app/v2_2/Greater_Manchester/station_status.json',
+    provider: 'Bee Network Cycle Hire',
+  },
+  {
     id: 'chattanooga-bikechatt',
     city: 'Chattanooga, TN',
     centerLat: 35.0456,

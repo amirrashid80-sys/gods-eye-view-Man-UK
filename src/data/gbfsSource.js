@@ -12,6 +12,7 @@ const GBFS_ALLOWED_HOSTS = new Set([
   'gbfs.urbansharing.com',
   'api.entur.io',
   'api.cyclocity.fr',
+  'beryl-gbfs-production.web.app',
 ]);
 
 /**
