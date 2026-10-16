@@ -380,6 +380,33 @@ const RAW_GBFS_CITY_REGISTRY = [
     systemId: 'Worcester',
   }),
   {
+    // WESTcargo runs Bristol and Bath as one nextbike network (domain "we",
+    // per maps.nextbike.net/maps/nextbike-live.json?list_cities=1); one
+    // feed, one entry, radius wide enough to reach both ~20 km apart.
+    id: 'westcargo-bristol-bath',
+    city: 'Bristol & Bath, UK',
+    centerLat: 51.4587,
+    centerLon: -2.57355,
+    loadRadiusKm: 40,
+    stationInformationUrl:
+      'https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_we/en/station_information.json',
+    stationStatusUrl:
+      'https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_we/en/station_status.json',
+    provider: 'WESTcargo',
+  },
+  {
+    id: 'swansea-university-nextbike',
+    city: 'Swansea, UK',
+    centerLat: 51.606,
+    centerLon: -3.9243,
+    loadRadiusKm: 90,
+    stationInformationUrl:
+      'https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_uu/en/station_information.json',
+    stationStatusUrl:
+      'https://gbfs.nextbike.net/maps/gbfs/v2/nextbike_uu/en/station_status.json',
+    provider: 'Nextbike',
+  },
+  {
     id: 'chattanooga-bikechatt',
     city: 'Chattanooga, TN',
     centerLat: 35.0456,
