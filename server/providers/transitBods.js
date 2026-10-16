@@ -36,12 +36,11 @@ import {
  * Keyless (no BODS_API_KEY): both routes answer without contacting BODS —
  * vehicles 503s {error:'no_key'}, status reports {hasKey:false}.
  *
- * Not (yet) part of the voice/LLM mobility tool's coverage: that tool
- * (src/tools/queries/mobility.js) discovers feeds via `/api/transit/feeds`,
- * which only lists the keyless registry. Asking it about Manchester buses
- * will report no coverage even though the map layer shows them — a known,
- * disclosed gap, not an oversight; closing it means extending the registry
- * proxy's `/feeds` route, a separate, lower-risk follow-up.
+ * Also reachable from the voice/LLM mobility tool (src/tools/queries/
+ * mobility.js): server/providers/transit.js appends this feed's catalog
+ * entry to `/api/transit/feeds` whenever BODS_API_KEY is configured, so
+ * `getFeeds()` → `requestSnapshot()` finds it the same way it finds any
+ * registry feed.
  *
  * @returns {import('vite').Plugin}
  */

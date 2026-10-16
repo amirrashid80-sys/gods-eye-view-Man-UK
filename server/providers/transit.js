@@ -1,5 +1,37 @@
 import { createTransitService } from '../../src/sources/transitService.js';
+import { TRANSIT_BYOK_FEEDS } from '../../src/data/transitFeeds.js';
 export { fetchTransitFeed } from '../../src/sources/transitService.js';
+
+/**
+ * BYOK catalog entries whose env key is actually configured, in exactly
+ * `publicTransitCatalog()`'s shape (src/data/transitFeeds.js) — never a
+ * `url` or `headers`, same rule the keyless catalog follows. A feed is only
+ * offered here when `/api/transit-bods/vehicles`-style route would actually
+ * answer with data rather than 503 `no_key`, so this list and what a caller
+ * can successfully poll stay in sync.
+ * @returns {object[]}
+ */
+function configuredByokFeeds() {
+  const entries = [];
+  const bods = TRANSIT_BYOK_FEEDS.find(
+    (feed) => feed.id === 'bods-greater-manchester',
+  );
+  if (bods && String(process.env.BODS_API_KEY || '').trim()) {
+    entries.push({
+      id: bods.id,
+      name: bods.name,
+      operator: bods.operator,
+      region: bods.region,
+      center: { ...bods.center },
+      loadRadiusKm: bods.loadRadiusKm,
+      license: bods.license,
+      licenseUrl: bods.licenseUrl,
+      attribution: bods.attribution,
+      historyRetention: bods.historyRetention === true,
+    });
+  }
+  return entries;
+}
 
 /** Connect the reusable transit request service to development and preview. */
 export function transitProxy(options = {}) {
@@ -10,6 +42,17 @@ export function transitProxy(options = {}) {
         url: `http://localhost/api/transit${req.url || '/'}`,
         method: req.method,
       });
+      const isFeedsRoute = /^\/feeds\/?(?:\?|$)/.test(req.url || '/');
+      if (isFeedsRoute && response.status === 200) {
+        const byok = configuredByokFeeds();
+        if (byok.length) {
+          const body = JSON.parse(await response.text());
+          body.feeds = [...(body.feeds || []), ...byok];
+          res.writeHead(response.status, Object.fromEntries(response.headers));
+          res.end(JSON.stringify(body));
+          return;
+        }
+      }
       res.writeHead(response.status, Object.fromEntries(response.headers));
       res.end(await response.text());
     });
