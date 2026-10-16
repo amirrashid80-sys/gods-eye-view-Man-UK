@@ -6,7 +6,10 @@ import {
   RANGE_SLACK_KM,
   inflateViewBounds,
 } from './policy.js';
-import { transitFeedsInRange } from '../../data/transitFeeds.js';
+import {
+  transitByokFeedsInRange,
+  transitFeedsInRange,
+} from '../../data/transitFeeds.js';
 
 /**
  * Camera-driven feed activation: only the feeds whose coverage circle contains
@@ -85,8 +88,18 @@ export function createViewport({ state, services, parts }) {
       for (const feed of transitFeedsInRange(center.lat, center.lon)) {
         desired.set(feed.id, feed);
       }
+      for (const feed of transitByokFeedsInRange(center.lat, center.lon)) {
+        desired.set(feed.id, feed);
+      }
       // Hysteresis: a feed already active stays active a little past its edge.
       for (const feed of transitFeedsInRange(
+        center.lat,
+        center.lon,
+        RANGE_SLACK_KM,
+      )) {
+        if (state._activeFeeds.has(feed.id)) desired.set(feed.id, feed);
+      }
+      for (const feed of transitByokFeedsInRange(
         center.lat,
         center.lon,
         RANGE_SLACK_KM,

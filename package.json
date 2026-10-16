@@ -258,6 +258,9 @@
     "./server/providers/transit": {
       "node": "./server/providers/transit.js"
     },
+    "./server/providers/transit-bods": {
+      "node": "./server/providers/transitBods.js"
+    },
     "./sources/transit": "./src/data/transitProxy.js",
     "./layers/transit": "./src/layers/transit/index.js",
     "./layers/transit/standalone": "./src/data/transit.js",

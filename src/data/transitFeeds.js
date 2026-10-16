@@ -738,11 +738,54 @@ export const TRANSIT_ENABLED_FEEDS = Object.freeze(
   TRANSIT_FEED_REGISTRY.filter((feed) => feed.defaultEnabled === true),
 );
 
+/**
+ * BYOK transit feeds: real coverage descriptors with NO upstream `url` and
+ * NO key — deliberately outside `TRANSIT_FEED_REGISTRY` (and its keyless-only
+ * admission rule, enforced by transitFeeds.test.mjs) because their real
+ * endpoint requires a server-side API key. The key lives only in the
+ * matching `server/providers/*` proxy; this file never sees it.
+ *
+ * `requestPath` is the one thing that makes these fetchable: a same-origin
+ * path `src/layers/transit/source.js` calls directly instead of the generic
+ * `/api/transit/vehicles/<id>` pattern. Everything else here is exactly the
+ * client-safe subset `TRANSIT_FEED_REGISTRY` entries carry (coverage, mode,
+ * credit) — used by viewport activation and by selection/trails/queries
+ * through `getRegisteredTransitFeed`, same as any registry feed.
+ * @type {ReadonlyArray<Readonly<{
+ *   id: string, name: string, operator: string, region: string,
+ *   center: {lat: number, lon: number}, loadRadiusKm: number,
+ *   requestPath: string, license: string, licenseUrl: string,
+ *   attribution: string, defaultMode: string, historyRetention?: boolean,
+ * }>>}
+ */
+export const TRANSIT_BYOK_FEEDS = Object.freeze([
+  Object.freeze({
+    id: 'bods-greater-manchester',
+    name: 'Bus Open Data Service',
+    operator: 'Bus Open Data Service (Department for Transport)',
+    region: 'Greater Manchester, UK',
+    center: Object.freeze({ lat: 53.4808, lon: -2.2426 }),
+    // Covers the server's fixed bounding box (-2.80,53.30 to -1.90,53.70;
+    // see server/providers/transitBods.js) from this center with headroom.
+    loadRadiusKm: 40,
+    requestPath: '/api/transit-bods/vehicles',
+    license: 'Open Government Licence v3.0 (believed; see DATA_SOURCES.md)',
+    licenseUrl:
+      'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/',
+    attribution: 'Bus Open Data Service — Department for Transport',
+    defaultMode: 'bus',
+    historyRetention: false,
+  }),
+]);
+
 const FEED_BY_ID = new Map(
   TRANSIT_ENABLED_FEEDS.map((feed) => [feed.id, feed]),
 );
 const ANY_FEED_BY_ID = new Map(
   TRANSIT_FEED_REGISTRY.map((feed) => [feed.id, feed]),
+);
+const BYOK_FEED_BY_ID = new Map(
+  TRANSIT_BYOK_FEEDS.map((feed) => [feed.id, feed]),
 );
 
 /** Feed ids are path segments: lowercase letters, digits, hyphens only. */
@@ -763,13 +806,31 @@ export function getTransitFeed(id) {
 
 /**
  * Look up any registered feed, enabled or not. For credits and documentation
- * only — never for resolving a request into an upstream fetch.
+ * only — never for resolving a request into an upstream fetch. Also resolves
+ * a BYOK feed id, which this same "never resolves a fetch" rule keeps safe:
+ * a BYOK descriptor carries a same-origin `requestPath`, never an upstream
+ * URL or key.
  * @param {string} id
  * @returns {object|null}
  */
 export function getRegisteredTransitFeed(id) {
   if (typeof id !== 'string' || !TRANSIT_FEED_ID_PATTERN.test(id)) return null;
-  return ANY_FEED_BY_ID.get(id) || null;
+  return ANY_FEED_BY_ID.get(id) || BYOK_FEED_BY_ID.get(id) || null;
+}
+
+/**
+ * The same-origin path to fetch a feed's snapshot from. Registry feeds use
+ * the generic `/api/transit/vehicles/<id>` route; a BYOK feed names its own
+ * proxy route instead (its real upstream needs a key the browser never
+ * holds). Unknown ids fall back to the generic pattern, matching prior
+ * behavior for every registry feed.
+ * @param {string} id
+ * @returns {string}
+ */
+export function transitFeedRequestPath(id) {
+  const byok = BYOK_FEED_BY_ID.get(id);
+  if (byok) return byok.requestPath;
+  return `/api/transit/vehicles/${encodeURIComponent(id)}`;
 }
 
 /**
@@ -801,6 +862,26 @@ export function haversineKm(aLat, aLon, bLat, bLon) {
 export function transitFeedsInRange(lat, lon, slackKm = 0) {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return [];
   return TRANSIT_ENABLED_FEEDS.map((feed) => ({
+    feed,
+    km: haversineKm(lat, lon, feed.center.lat, feed.center.lon),
+  }))
+    .filter(({ feed, km }) => km <= feed.loadRadiusKm + Math.max(0, slackKm))
+    .sort((a, b) => a.km - b.km)
+    .map(({ feed }) => feed);
+}
+
+/**
+ * BYOK feeds whose coverage circle contains the point, nearest first. Same
+ * shape and rule as `transitFeedsInRange`, kept separate because BYOK feeds
+ * are never part of `TRANSIT_ENABLED_FEEDS`.
+ * @param {number} lat
+ * @param {number} lon
+ * @param {number} [slackKm=0]
+ * @returns {object[]}
+ */
+export function transitByokFeedsInRange(lat, lon, slackKm = 0) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return [];
+  return TRANSIT_BYOK_FEEDS.map((feed) => ({
     feed,
     km: haversineKm(lat, lon, feed.center.lat, feed.center.lon),
   }))

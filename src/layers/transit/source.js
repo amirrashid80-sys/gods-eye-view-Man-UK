@@ -1,4 +1,5 @@
 import { fetchTransitHistory } from '../../sources/transitHistory.js';
+import { transitFeedRequestPath } from '../../data/transitFeeds.js';
 
 /** Request transit snapshots through caller-owned transport. */
 export function createTransitSource({
@@ -29,7 +30,7 @@ export function createTransitSource({
       if (typeof feedId !== 'string' || !feedId || feedId.length > 160)
         throw new TypeError('A transit feed identifier is required');
       return Promise.resolve(
-        fetchImpl(`/api/transit/vehicles/${encodeURIComponent(feedId)}`, {
+        fetchImpl(transitFeedRequestPath(feedId), {
           signal,
           headers: { Accept: 'application/json' },
         }),

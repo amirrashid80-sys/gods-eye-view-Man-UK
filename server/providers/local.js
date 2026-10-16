@@ -15,6 +15,7 @@ import { radioBrowserProxy } from './radio.js';
 import { gbfsProxy } from './gbfs.js';
 import { localReceiversProxy } from './local-receivers.js';
 import { transitProxy } from './transit.js';
+import { bodsTransitProxy } from './transitBods.js';
 import { adsbLolProxy } from './aircraft/adsb-lol.js';
 import { aisLiveProxy } from './vessels/ais-live.js';
 import { trackBackfillProxies } from './aircraft/tracks.js';
@@ -51,6 +52,7 @@ function localProviderPlugins({ realtime } = {}) {
     gbfsProxy(),
     localReceiversProxy(),
     transitProxy(),
+    bodsTransitProxy(),
     adsbLolProxy(),
     aisLiveProxy(),
     trackBackfillProxies(),
