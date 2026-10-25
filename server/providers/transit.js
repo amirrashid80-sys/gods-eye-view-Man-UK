@@ -6,31 +6,29 @@ export { fetchTransitFeed } from '../../src/sources/transitService.js';
  * BYOK catalog entries whose env key is actually configured, in exactly
  * `publicTransitCatalog()`'s shape (src/data/transitFeeds.js) — never a
  * `url` or `headers`, same rule the keyless catalog follows. A feed is only
- * offered here when `/api/transit-bods/vehicles`-style route would actually
- * answer with data rather than 503 `no_key`, so this list and what a caller
- * can successfully poll stay in sync.
+ * offered here when its `/api/transit-bods/vehicles/<id>`-style route would
+ * actually answer with data rather than 503 `no_key`, so this list and what
+ * a caller can successfully poll stay in sync. All three BODS regions share
+ * one key; a future non-BODS BYOK provider would need its own id-prefixed
+ * gate here rather than reusing this one.
  * @returns {object[]}
  */
 function configuredByokFeeds() {
-  const entries = [];
-  const bods = TRANSIT_BYOK_FEEDS.find(
-    (feed) => feed.id === 'bods-greater-manchester',
+  if (!String(process.env.BODS_API_KEY || '').trim()) return [];
+  return TRANSIT_BYOK_FEEDS.filter((feed) => feed.id.startsWith('bods-')).map(
+    (feed) => ({
+      id: feed.id,
+      name: feed.name,
+      operator: feed.operator,
+      region: feed.region,
+      center: { ...feed.center },
+      loadRadiusKm: feed.loadRadiusKm,
+      license: feed.license,
+      licenseUrl: feed.licenseUrl,
+      attribution: feed.attribution,
+      historyRetention: feed.historyRetention === true,
+    }),
   );
-  if (bods && String(process.env.BODS_API_KEY || '').trim()) {
-    entries.push({
-      id: bods.id,
-      name: bods.name,
-      operator: bods.operator,
-      region: bods.region,
-      center: { ...bods.center },
-      loadRadiusKm: bods.loadRadiusKm,
-      license: bods.license,
-      licenseUrl: bods.licenseUrl,
-      attribution: bods.attribution,
-      historyRetention: bods.historyRetention === true,
-    });
-  }
-  return entries;
 }
 
 /** Connect the reusable transit request service to development and preview. */

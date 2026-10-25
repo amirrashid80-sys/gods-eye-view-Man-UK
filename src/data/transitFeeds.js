@@ -758,6 +758,17 @@ export const TRANSIT_ENABLED_FEEDS = Object.freeze(
  *   attribution: string, defaultMode: string, historyRetention?: boolean,
  * }>>}
  */
+// Shared across all three BODS entries below: a per-metro bbox feed was
+// measured at ~1,500-2,100 vehicles each; one nationwide bbox was measured
+// at ~21,000 — over the app's global MAX_VEHICLES_TOTAL (15,000,
+// src/layers/transit/policy.js), so this is three regional feeds rather
+// than one national one (server/providers/transitBods.js has the detail).
+const BODS_LICENSE = Object.freeze({
+  license: 'Open Government Licence v3.0 (believed; see DATA_SOURCES.md)',
+  licenseUrl:
+    'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/',
+  attribution: 'Bus Open Data Service — Department for Transport',
+});
 export const TRANSIT_BYOK_FEEDS = Object.freeze([
   Object.freeze({
     id: 'bods-greater-manchester',
@@ -768,11 +779,34 @@ export const TRANSIT_BYOK_FEEDS = Object.freeze([
     // Covers the server's fixed bounding box (-2.80,53.30 to -1.90,53.70;
     // see server/providers/transitBods.js) from this center with headroom.
     loadRadiusKm: 40,
-    requestPath: '/api/transit-bods/vehicles',
-    license: 'Open Government Licence v3.0 (believed; see DATA_SOURCES.md)',
-    licenseUrl:
-      'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/',
-    attribution: 'Bus Open Data Service — Department for Transport',
+    requestPath: '/api/transit-bods/vehicles/bods-greater-manchester',
+    ...BODS_LICENSE,
+    defaultMode: 'bus',
+    historyRetention: false,
+  }),
+  Object.freeze({
+    id: 'bods-birmingham',
+    name: 'Bus Open Data Service',
+    operator: 'Bus Open Data Service (Department for Transport)',
+    region: 'Birmingham, UK',
+    center: Object.freeze({ lat: 52.4862, lon: -1.8904 }),
+    // Covers the server's fixed bounding box (-2.30,52.30 to -1.40,52.70).
+    loadRadiusKm: 40,
+    requestPath: '/api/transit-bods/vehicles/bods-birmingham',
+    ...BODS_LICENSE,
+    defaultMode: 'bus',
+    historyRetention: false,
+  }),
+  Object.freeze({
+    id: 'bods-leeds',
+    name: 'Bus Open Data Service',
+    operator: 'Bus Open Data Service (Department for Transport)',
+    region: 'Leeds, UK',
+    center: Object.freeze({ lat: 53.8008, lon: -1.5491 }),
+    // Covers the server's fixed bounding box (-2.00,53.60 to -1.10,53.95).
+    loadRadiusKm: 40,
+    requestPath: '/api/transit-bods/vehicles/bods-leeds',
+    ...BODS_LICENSE,
     defaultMode: 'bus',
     historyRetention: false,
   }),
